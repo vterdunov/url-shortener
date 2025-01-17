@@ -100,9 +100,10 @@ public class Main {
         System.out.println("2. Open URL in browser");
         System.out.println("3. List my URLs");
         System.out.println("4. Remove URL");
-        System.out.println("5. Switch user");
-        System.out.println("6. Exit");
-        System.out.print("Choose option (1-6): ");
+        System.out.println("5. Update click limit");
+        System.out.println("6. Switch user");
+        System.out.println("7. Exit");
+        System.out.print("Choose option (1-7): ");
     }
 
     private static void processChoice(int choice) {
@@ -120,9 +121,12 @@ public class Main {
                 removeUrl();
                 break;
             case 5:
-                showLoginMenu();
+                updateClickLimit();
                 break;
             case 6:
+                showLoginMenu();
+                break;
+            case 7:
                 System.out.println("Goodbye!");
                 System.exit(0);
                 break;
@@ -236,6 +240,37 @@ public class Main {
             System.out.println("URL removed successfully");
         } catch (Exception e) {
             System.out.println("Failed to remove URL: " + e.getMessage());
+        }
+    }
+
+    private static void updateClickLimit() {
+        System.out.print("Enter short URL code: ");
+        String shortUrl = scanner.nextLine().trim();
+        if (shortUrl.isEmpty()) {
+            System.out.println("URL code cannot be empty");
+            return;
+        }
+
+        int newClickLimit;
+        while (true) {
+            System.out.print("Enter new click limit: ");
+            String input = scanner.nextLine().trim();
+            try {
+                newClickLimit = Integer.parseInt(input);
+                if (newClickLimit > 0) {
+                    break;
+                }
+                System.out.println("Click limit must be positive");
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number");
+            }
+        }
+
+        try {
+            urlService.updateClickLimit(shortUrl, userId, newClickLimit);
+            System.out.println("Click limit successfully updated to: " + newClickLimit);
+        } catch (Exception e) {
+            System.out.println("Failed to update click limit: " + e.getMessage());
         }
     }
 }

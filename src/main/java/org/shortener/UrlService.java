@@ -51,6 +51,26 @@ public class UrlService {
         return url;
     }
 
+    public void updateClickLimit(String shortUrl, String userId, int newClickLimit) {
+        ShortUrl url = repository.findByShortUrl(shortUrl);
+        if (url == null) {
+            throw new UrlNotFoundException("URL not found: " + shortUrl);
+        }
+        if (!url.getUserId().equals(userId)) {
+            throw new UrlAccessDeniedException("Access denied for URL: " + shortUrl);
+        }
+
+        // Проверяем, что новый лимит не меньше текущего количества кликов
+        if (newClickLimit < url.getClickCount()) {
+            throw new UrlValidationException("New click limit cannot be less than current click count: " + url.getClickCount());
+        }
+
+        // Применяем то же правило, что и при создании - не меньше дефолтного значения
+        int actualClickLimit = Math.max(newClickLimit, config.getDefaultUrlClicks());
+        url.setClickLimit(actualClickLimit);
+        repository.save(url);
+    }
+
     public String getOriginalUrl(String shortUrl) {
         ShortUrl url = repository.findByShortUrl(shortUrl);
         if (url == null) {
