@@ -33,7 +33,7 @@ public class UrlService {
         if (lifetimeDays == null) {
             actualLifetimeDays = config.getDefaultUrlLifetimeDays();
         } else {
-            actualLifetimeDays = Math.min(lifetimeDays, config.getMaxUrlLifetimeDays());
+            actualLifetimeDays = Math.min(lifetimeDays, config.getDefaultUrlLifetimeDays());
         }
         LocalDateTime expiresAt = now.plusDays(actualLifetimeDays);
 
@@ -42,7 +42,7 @@ public class UrlService {
         if (clickLimit == null) {
             actualClickLimit = config.getDefaultUrlClicks();
         } else {
-            actualClickLimit = Math.min(clickLimit, config.getMaxUrlClicks());
+            actualClickLimit = Math.max(clickLimit, config.getDefaultUrlClicks());
         }
 
         String shortUrl = generator.generateUniqueShortUrl(repository);

@@ -97,13 +97,12 @@ public class Main {
         System.out.println("\n=== URL Shortener ===");
         System.out.println("Current user UUID: " + userId);
         System.out.println("1. Create short URL");
-        System.out.println("2. Get original URL");
+        System.out.println("2. Open URL in browser");
         System.out.println("3. List my URLs");
         System.out.println("4. Remove URL");
-        System.out.println("5. Open URL in browser");
-        System.out.println("6. Switch user");
-        System.out.println("7. Exit");
-        System.out.print("Choose option (1-7): ");
+        System.out.println("5. Switch user");
+        System.out.println("6. Exit");
+        System.out.print("Choose option (1-6): ");
     }
 
     private static void processChoice(int choice) {
@@ -112,7 +111,7 @@ public class Main {
                 createShortUrl();
                 break;
             case 2:
-                getOriginalUrl();
+                getAndOpenUrl();
                 break;
             case 3:
                 listUrls();
@@ -121,12 +120,9 @@ public class Main {
                 removeUrl();
                 break;
             case 5:
-                openUrl();
-                break;
-            case 6:
                 showLoginMenu();
                 break;
-            case 7:
+            case 6:
                 System.out.println("Goodbye!");
                 System.exit(0);
                 break;
@@ -190,7 +186,7 @@ public class Main {
         }
     }
 
-    private static void openUrl() {
+    private static void getAndOpenUrl() {
         System.out.print("Enter short URL code: ");
         String shortUrl = scanner.nextLine().trim();
         if (shortUrl.isEmpty()) {
@@ -203,22 +199,6 @@ public class Main {
             System.out.println("URL opened in browser");
         } catch (Exception e) {
             System.out.println("Failed to open URL: " + e.getMessage());
-        }
-    }
-
-    private static void getOriginalUrl() {
-        System.out.print("Enter short URL code: ");
-        String shortUrl = scanner.nextLine().trim();
-        if (shortUrl.isEmpty()) {
-            System.out.println("URL code cannot be empty");
-            return;
-        }
-
-        try {
-            String originalUrl = urlService.getOriginalUrl(shortUrl);
-            System.out.println("Original URL: " + originalUrl);
-        } catch (Exception e) {
-            System.out.println("Failed to get original URL: " + e.getMessage());
         }
     }
 
