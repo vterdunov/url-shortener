@@ -12,12 +12,18 @@ public class Main {
     private static String userId;
 
     public static void main(String[] args) {
+        System.out.println("Working directory: " + System.getProperty("user.dir"));
+
         showLoginMenu();
 
         while (true) {
             printMenu();
             try {
-                int choice = Integer.parseInt(scanner.nextLine());
+                String input = scanner.nextLine().trim();
+                if (input.isEmpty()) {
+                    continue;
+                }
+                int choice = Integer.parseInt(input);
                 processChoice(choice);
             } catch (NumberFormatException e) {
                 System.out.println("Please enter a valid number");
@@ -25,6 +31,7 @@ public class Main {
                 System.out.println("Error: " + e.getMessage());
             } catch (Exception e) {
                 System.out.println("Unexpected error: " + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
@@ -37,7 +44,11 @@ public class Main {
             System.out.print("Choose option (1-2): ");
 
             try {
-                int choice = Integer.parseInt(scanner.nextLine());
+                String input = scanner.nextLine().trim();
+                if (input.isEmpty()) {
+                    continue;
+                }
+                int choice = Integer.parseInt(input);
                 switch (choice) {
                     case 1:
                         loginWithUUID();
@@ -56,11 +67,11 @@ public class Main {
 
     private static void loginWithUUID() {
         while (true) {
-            System.out.print("Enter your UUID (or press Enter to cancel): ");
+            System.out.print("Enter your UUID (or press Enter to go back): ");
             String input = scanner.nextLine().trim();
 
             if (input.isEmpty()) {
-                createNewUser();
+                showLoginMenu();
                 return;
             }
 
@@ -77,7 +88,7 @@ public class Main {
     }
 
     private static void createNewUser() {
-        userId = new User().getId();
+        userId = UUID.randomUUID().toString();
         fileRepository.loadUserData(userId);
         System.out.println("New user created with UUID: " + userId);
         System.out.println("Please save this UUID for future logins!");
@@ -127,57 +138,109 @@ public class Main {
 
     private static void createShortUrl() {
         System.out.print("Enter URL to shorten: ");
-        String originalUrl = scanner.nextLine();
+        String originalUrl = scanner.nextLine().trim();
+        if (originalUrl.isEmpty()) {
+            System.out.println("URL cannot be empty");
+            return;
+        }
 
-        System.out.print("Enter click limit (0 for unlimited): ");
-        int clickLimit = Integer.parseInt(scanner.nextLine());
+        int clickLimit = 0;
+        while (true) {
+            System.out.print("Enter click limit (0 for unlimited): ");
+            try {
+                String input = scanner.nextLine().trim();
+                if (input.isEmpty()) {
+                    break;
+                }
+                clickLimit = Integer.parseInt(input);
+                if (clickLimit >= 0) {
+                    break;
+                }
+                System.out.println("Click limit must be non-negative");
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number");
+            }
+        }
 
-        LocalDateTime expiresAt = LocalDateTime.now().plusDays(1); // Срок жизни - 1 день
-
-        ShortUrl shortUrl = urlService.createShortUrl(originalUrl, userId, expiresAt, clickLimit);
-        System.out.println("Created short URL: " + shortUrl.getShortUrl());
-        System.out.println("Expires at: " + shortUrl.getExpiresAt());
-        System.out.println("Click limit: " + (shortUrl.getClickLimit() > 0 ? shortUrl.getClickLimit() : "unlimited"));
+        LocalDateTime expiresAt = LocalDateTime.now().plusDays(1);
+        try {
+            ShortUrl shortUrl = urlService.createShortUrl(originalUrl, userId, expiresAt, clickLimit);
+            System.out.println("\nURL successfully shortened:");
+            System.out.println("Short URL: " + shortUrl.getShortUrl());
+            System.out.println("Expires at: " + shortUrl.getExpiresAt());
+            System.out.println("Click limit: " + (shortUrl.getClickLimit() > 0 ? shortUrl.getClickLimit() : "unlimited"));
+        } catch (Exception e) {
+            System.out.println("Failed to create short URL: " + e.getMessage());
+        }
     }
 
     private static void openUrl() {
         System.out.print("Enter short URL code: ");
-        String shortUrl = scanner.nextLine();
-        urlService.openUrl(shortUrl);
-        System.out.println("URL opened in browser");
+        String shortUrl = scanner.nextLine().trim();
+        if (shortUrl.isEmpty()) {
+            System.out.println("URL code cannot be empty");
+            return;
+        }
+
+        try {
+            urlService.openUrl(shortUrl);
+            System.out.println("URL opened in browser");
+        } catch (Exception e) {
+            System.out.println("Failed to open URL: " + e.getMessage());
+        }
     }
 
     private static void getOriginalUrl() {
         System.out.print("Enter short URL code: ");
-        String shortUrl = scanner.nextLine();
-
-        String originalUrl = urlService.getOriginalUrl(shortUrl);
-        System.out.println("Original URL: " + originalUrl);
-    }
-
-    private static void listUrls() {
-        List<ShortUrl> urls = urlService.getUserUrls(userId);
-        if (urls.isEmpty()) {
-            System.out.println("No URLs found");
+        String shortUrl = scanner.nextLine().trim();
+        if (shortUrl.isEmpty()) {
+            System.out.println("URL code cannot be empty");
             return;
         }
 
-        System.out.println("\nYour URLs:");
-        for (ShortUrl url : urls) {
-            System.out.println("Short: " + url.getShortUrl());
-            System.out.println("Original: " + url.getOriginalUrl());
-            System.out.println("Expires: " + url.getExpiresAt());
-            System.out.println("Clicks: " + url.getClickCount() + "/" +
-                    (url.getClickLimit() > 0 ? url.getClickLimit() : "unlimited"));
-            System.out.println("---");
+        try {
+            String originalUrl = urlService.getOriginalUrl(shortUrl);
+            System.out.println("Original URL: " + originalUrl);
+        } catch (Exception e) {
+            System.out.println("Failed to get original URL: " + e.getMessage());
+        }
+    }
+
+    private static void listUrls() {
+        try {
+            List<ShortUrl> urls = urlService.getUserUrls(userId);
+            if (urls.isEmpty()) {
+                System.out.println("No URLs found");
+                return;
+            }
+
+            System.out.println("\nYour URLs:");
+            for (ShortUrl url : urls) {
+                System.out.println("\nShort URL: " + url.getShortUrl());
+                System.out.println("Original URL: " + url.getOriginalUrl());
+                System.out.println("Expires at: " + url.getExpiresAt());
+                System.out.println("Clicks: " + url.getClickCount() + "/" +
+                        (url.getClickLimit() > 0 ? url.getClickLimit() : "unlimited"));
+                System.out.println("---");
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to list URLs: " + e.getMessage());
         }
     }
 
     private static void removeUrl() {
         System.out.print("Enter short URL to remove: ");
-        String shortUrl = scanner.nextLine();
+        String shortUrl = scanner.nextLine().trim();
+        if (shortUrl.isEmpty()) {
+            System.out.println("URL code cannot be empty");
+            return;
+        }
 
-        urlService.removeUrl(shortUrl, userId);
-        System.out.println("URL removed successfully");
+        try {
+            urlService.removeUrl(shortUrl, userId);
+            System.out.println("URL removed successfully");
+        } catch (Exception e) {
+            System.out.println("Failed to remove URL: " + e.getMessage());
+        }
     }
 }
