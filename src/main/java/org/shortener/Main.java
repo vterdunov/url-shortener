@@ -1,6 +1,5 @@
 package org.shortener;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
@@ -144,31 +143,48 @@ public class Main {
             return;
         }
 
-        int clickLimit = 0;
+        Integer lifetimeDays = null;
         while (true) {
-            System.out.print("Enter click limit (0 for unlimited): ");
+            System.out.print("Enter lifetime in days (press Enter for default): ");
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                break;
+            }
             try {
-                String input = scanner.nextLine().trim();
-                if (input.isEmpty()) {
+                lifetimeDays = Integer.parseInt(input);
+                if (lifetimeDays > 0) {
                     break;
                 }
-                clickLimit = Integer.parseInt(input);
-                if (clickLimit >= 0) {
-                    break;
-                }
-                System.out.println("Click limit must be non-negative");
+                System.out.println("Lifetime must be positive");
             } catch (NumberFormatException e) {
                 System.out.println("Please enter a valid number");
             }
         }
 
-        LocalDateTime expiresAt = LocalDateTime.now().plusDays(1);
+        Integer clickLimit = null;
+        while (true) {
+            System.out.print("Enter click limit (press Enter for default): ");
+            String input = scanner.nextLine().trim();
+            if (input.isEmpty()) {
+                break;
+            }
+            try {
+                clickLimit = Integer.parseInt(input);
+                if (clickLimit > 0) {
+                    break;
+                }
+                System.out.println("Click limit must be positive");
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number");
+            }
+        }
+
         try {
-            ShortUrl shortUrl = urlService.createShortUrl(originalUrl, userId, expiresAt, clickLimit);
+            ShortUrl shortUrl = urlService.createShortUrl(originalUrl, userId, lifetimeDays, clickLimit);
             System.out.println("\nURL successfully shortened:");
             System.out.println("Short URL: " + shortUrl.getShortUrl());
             System.out.println("Expires at: " + shortUrl.getExpiresAt());
-            System.out.println("Click limit: " + (shortUrl.getClickLimit() > 0 ? shortUrl.getClickLimit() : "unlimited"));
+            System.out.println("Click limit: " + shortUrl.getClickLimit());
         } catch (Exception e) {
             System.out.println("Failed to create short URL: " + e.getMessage());
         }
@@ -219,8 +235,7 @@ public class Main {
                 System.out.println("\nShort URL: " + url.getShortUrl());
                 System.out.println("Original URL: " + url.getOriginalUrl());
                 System.out.println("Expires at: " + url.getExpiresAt());
-                System.out.println("Clicks: " + url.getClickCount() + "/" +
-                        (url.getClickLimit() > 0 ? url.getClickLimit() : "unlimited"));
+                System.out.println("Clicks: " + url.getClickCount() + "/" + url.getClickLimit());
                 System.out.println("---");
             }
         } catch (Exception e) {

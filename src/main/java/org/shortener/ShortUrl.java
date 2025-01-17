@@ -6,17 +6,15 @@ public class ShortUrl {
     private final String shortUrl;
     private final String originalUrl;
     private final String userId;
-    private final LocalDateTime expiresAt;
-    private final LocalDateTime createdAt;
-    private final int clickLimit; // максимальное количество переходов
-    private int clickCount; // текущее количество переходов
+    private LocalDateTime expiresAt;
+    private int clickLimit;
+    private int clickCount;
 
     public ShortUrl(String shortUrl, String originalUrl, String userId, LocalDateTime expiresAt, int clickLimit) {
         this.shortUrl = shortUrl;
         this.originalUrl = originalUrl;
         this.userId = userId;
         this.expiresAt = expiresAt;
-        this.createdAt = LocalDateTime.now();
         this.clickLimit = clickLimit;
         this.clickCount = 0;
     }
@@ -37,27 +35,31 @@ public class ShortUrl {
         return expiresAt;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public int getClickCount() {
-        return clickCount;
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
     }
 
     public int getClickLimit() {
         return clickLimit;
     }
 
-    public void incrementClickCount() {
-        this.clickCount++;
+    public void setClickLimit(int clickLimit) {
+        this.clickLimit = clickLimit;
+    }
+
+    public int getClickCount() {
+        return clickCount;
     }
 
     public boolean isExpired() {
-        return expiresAt != null && LocalDateTime.now().isAfter(expiresAt);
+        return LocalDateTime.now().isAfter(expiresAt);
     }
 
     public boolean isLimitReached() {
-        return clickCount >= clickLimit;
+        return clickLimit > 0 && clickCount >= clickLimit;
+    }
+
+    public void incrementClickCount() {
+        clickCount++;
     }
 }
