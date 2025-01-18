@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.nio.file.*;
 
+// FileUrlRepository saves links into files
 public class FileUrlRepository implements UrlRepository {
     private static final String STORAGE_DIR = "url_storage";
     private final Gson gson;

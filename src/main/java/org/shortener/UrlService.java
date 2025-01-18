@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+// UrlService controls short url use-cases
 public class UrlService {
     private final UrlRepository repository;
     private final UrlGenerator generator;
@@ -28,7 +29,7 @@ public class UrlService {
 
         LocalDateTime now = LocalDateTime.now();
 
-        // Определяем время жизни ссылки
+        // Link lifetime
         int actualLifetimeDays;
         if (lifetimeDays == null) {
             actualLifetimeDays = config.getDefaultUrlLifetimeDays();
@@ -37,7 +38,7 @@ public class UrlService {
         }
         LocalDateTime expiresAt = now.plusDays(actualLifetimeDays);
 
-        // Определяем лимит кликов
+        // Clicks limit
         int actualClickLimit;
         if (clickLimit == null) {
             actualClickLimit = config.getDefaultUrlClicks();
@@ -60,12 +61,12 @@ public class UrlService {
             throw new UrlAccessDeniedException("Access denied for URL: " + shortUrl);
         }
 
-        // Проверяем, что новый лимит не меньше текущего количества кликов
+        // business rule
         if (newClickLimit < url.getClickCount()) {
             throw new UrlValidationException("New click limit cannot be less than current click count: " + url.getClickCount());
         }
 
-        // Применяем то же правило, что и при создании - не меньше дефолтного значения
+        // business rule
         int actualClickLimit = Math.max(newClickLimit, config.getDefaultUrlClicks());
         url.setClickLimit(actualClickLimit);
         repository.save(url);
@@ -77,11 +78,13 @@ public class UrlService {
             throw new UrlNotFoundException("URL not found: " + shortUrl);
         }
 
-        // Проверяем срок действия и удаляем если истек
+        // lazy expiration
         if (url.isExpired()) {
             repository.remove(shortUrl);
             throw new UrlNotFoundException("URL has expired: " + shortUrl);
         }
+
+        // lazy click linit check
         if (url.isLimitReached()) {
             repository.remove(shortUrl);
             throw new UrlNotFoundException("Click limit reached for URL: " + shortUrl);
@@ -89,6 +92,7 @@ public class UrlService {
 
         url.incrementClickCount();
         repository.save(url);
+
         return url.getOriginalUrl();
     }
 
@@ -105,7 +109,6 @@ public class UrlService {
         List<ShortUrl> userUrls = repository.findByUserId(userId);
         List<ShortUrl> activeUrls = new ArrayList<>();
 
-        // Фильтруем и удаляем просроченные ссылки
         for (ShortUrl url : userUrls) {
             if (url.isExpired() || url.isLimitReached()) {
                 repository.remove(url.getShortUrl());
